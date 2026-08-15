@@ -1,0 +1,415 @@
+{
+  "$schema": "https://sarva.tech/schemas/extension-v2.json",
+  "schema_version": 2,
+  "type": "tech-extension",
+  "id": "org.sarva.tech.ffmpeg",
+  "name": "FFmpeg Media Technology",
+  "version": "1.0.0",
+  "description": "Adds local FFmpeg/FFprobe capability without modifying Sarva core.",
+  "license": "GPL-3.0",
+  "author": {
+    "name": "Sarva Tech",
+    "email": "tech@sarva.ai"
+  },
+
+  "system_detection": {
+    "enabled": true,
+    "commands": [
+      {
+        "name": "ffmpeg",
+        "version_flag": "-version",
+        "min_version": "4.0.0",
+        "path_patterns": ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg"]
+      },
+      {
+        "name": "ffprobe",
+        "version_flag": "-version",
+        "min_version": "4.0.0"
+      }
+    ],
+    "prefer": "auto"
+  },
+
+  "platforms": {
+    "linux-x86_64": {
+      "archive": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz",
+      "archive_type": "tar.xz",
+      "checksum_url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/checksums.sha256",
+      "executables": {
+        "ffmpeg": "ffmpeg",
+        "ffprobe": "ffprobe"
+      }
+    },
+    "linux-aarch64": {
+      "archive": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linuxarm64-gpl.tar.xz",
+      "archive_type": "tar.xz",
+      "checksum_url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/checksums.sha256",
+      "executables": {
+        "ffmpeg": "ffmpeg",
+        "ffprobe": "ffprobe"
+      }
+    },
+    "macos-x86_64": {
+      "archive": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-macos64-gpl.tar.xz",
+      "archive_type": "tar.xz",
+      "checksum_url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/checksums.sha256",
+      "executables": {
+        "ffmpeg": "ffmpeg",
+        "ffprobe": "ffprobe"
+      }
+    },
+    "windows-x86_64": {
+      "archive": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip",
+      "archive_type": "zip",
+      "checksum_url": "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/checksums.sha256",
+      "executables": {
+        "ffmpeg": "ffmpeg.exe",
+        "ffprobe": "ffprobe.exe"
+      }
+    }
+  },
+
+  "capabilities": [
+    {
+      "id": "media.video.render_slideshow",
+      "description": "Render video slideshow from multiple images",
+      "supports_preflight": true,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "images": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Paths to image files"
+          },
+          "duration_per_image": {
+            "type": "number",
+            "default": 2.0,
+            "minimum": 0.1,
+            "maximum": 60.0
+          },
+          "width": { "type": "integer", "default": 720 },
+          "height": { "type": "integer", "default": 1280 },
+          "transition": {
+            "type": "string",
+            "enum": ["none", "fade", "slide", "wipe"],
+            "default": "none"
+          },
+          "output_path": {
+            "type": "string",
+            "description": "Where to save the video"
+          }
+        },
+        "required": ["images", "output_path"]
+      }
+    },
+    {
+      "id": "media.video.rebuild_last",
+      "description": "Re-render the most recent slideshow using the same parameters (fitur 'ulangi/rebuild')",
+      "supports_preflight": false,
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "id": "media.video.extract_frame",
+      "description": "Extract a single frame from video as image",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": { "type": "string" },
+          "timestamp": {
+            "type": "string",
+            "pattern": "^\\d{2}:\\d{2}:\\d{2}$",
+            "default": "00:00:05"
+          },
+          "output_path": { "type": "string" }
+        },
+        "required": ["input", "output_path"]
+      }
+    },
+    {
+      "id": "media.audio.extract",
+      "description": "Extract audio from video",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "input": { "type": "string" },
+          "format": {
+            "type": "string",
+            "enum": ["mp3", "aac", "wav", "flac"],
+            "default": "mp3"
+          },
+          "bitrate": { "type": "string", "default": "192k" },
+          "output_path": { "type": "string" }
+        },
+        "required": ["input", "output_path"]
+      }
+    },
+    {
+      "id": "media.inspect",
+      "description": "Inspect media metadata",
+      "input_schema": {
+        "type": "object",
+        "properties": { "file": { "type": "string" } }
+      }
+    }
+  ],
+
+  "matchers": [
+    {
+      "capability": "media.video.render_slideshow",
+      "patterns": [
+        {
+          "type": "regex",
+          "value": "(?:buat|render|bikin|rakit|create|make)\\s+(?:video|slideshow|klip|clip)\\s+(?:dari|from|with)\\s+(?:gambar|foto|images|pictures)",
+          "priority": 1
+        },
+        {
+          "type": "regex",
+          "value": "(?:render|make)\\s+(?:slideshow|video)\\s+from\\s+(?:images|pictures)",
+          "priority": 1
+        }
+      ]
+    },
+    {
+      "capability": "media.video.rebuild_last",
+      "patterns": [
+        {
+          "type": "regex",
+          "value": "(?:ulangi|rebuild|render ulang|bikin ulang|buat lagi)\\s+(?:video|slideshow|yang (?:tadi|kemarin|terakhir))",
+          "priority": 2
+        },
+        {
+          "type": "regex",
+          "value": "(?:redo|rebuild|regenerate)\\s+(?:the\\s+)?(?:last|previous)\\s+(?:video|slideshow)",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "capability": "media.video.extract_frame",
+      "patterns": [
+        {
+          "type": "regex",
+          "value": "(?:extract|ambil|screenshot|thumbnail)\\s+(?:frame|gambar)\\s+(?:dari|from)",
+          "priority": 1
+        }
+      ]
+    },
+    {
+      "capability": "media.audio.extract",
+      "patterns": [
+        {
+          "type": "regex",
+          "value": "(?:extract|rip|ambil)\\s+(?:audio|suara)\\s+(?:dari|from)",
+          "priority": 1
+        }
+      ]
+    }
+  ],
+
+  "parameter_extractor": {
+    "type": "javascript",
+    "script": "parsers/video_intent_parser.js",
+    "function": "extractParameters",
+    "input_mapping": {
+      "text": "user_text",
+      "attachments": "attachment_paths"
+    }
+  },
+
+  "pending_handler": {
+    "type": "javascript",
+    "script": "handlers/pending_video_handler.js",
+    "function": "handlePending"
+  },
+
+  "executor": {
+    "type": "shell",
+    "command_template": "{extension_root}/bin/ffmpeg",
+    "templates": {
+      "concat": {
+        "args": [
+          "-y",
+          "-f", "concat",
+          "-safe", "0",
+          "-i", "{concat_list_path}",
+          "-vf", "scale={width}:{height}:force_original_aspect_ratio=decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color=black",
+          "-vcodec", "libx264",
+          "-pix_fmt", "yuv420p",
+          "{output_path}"
+        ],
+        "pre_hook": {
+          "script": "parsers/video_intent_parser.js",
+          "function": "buildConcatList"
+        }
+      },
+      "transition": {
+        "args": [
+          "-y",
+          "{input_options}",
+          "-filter_complex", "{filter_complex}",
+          "-map", "[{map_label}]",
+          "-vcodec", "libx264",
+          "-pix_fmt", "yuv420p",
+          "{output_path}"
+        ],
+        "pre_hook": {
+          "script": "parsers/video_intent_parser.js",
+          "function": "buildFilterComplex"
+        }
+      },
+      "extract_frame": {
+        "args": [
+          "-y",
+          "-i", "{input}",
+          "-ss", "{timestamp}",
+          "-vframes", "1",
+          "{output_path}"
+        ]
+      },
+      "extract_audio": {
+        "args": [
+          "-y",
+          "-i", "{input}",
+          "-vn",
+          "-ab", "{bitrate}",
+          "{output_path}"
+        ]
+      },
+      "inspect": {
+        "args": [
+          "-v", "error",
+          "-select_streams", "v:0",
+          "-show_entries", "stream=width,height,codec_name,duration",
+          "-of", "json",
+          "{file}"
+        ]
+      }
+    }
+  },
+
+  "database": {
+    "namespace": "ext_ffmpeg",
+    "tables": [
+      {
+        "name": "render_history",
+        "columns": [
+          { "name": "id", "type": "TEXT", "primary_key": true },
+          { "name": "params_json", "type": "TEXT" },
+          { "name": "created_at", "type": "TEXT" }
+        ]
+      }
+    ]
+  },
+
+  "wizard_hints": {
+    "video": {
+      "label": "Video Processing 🎬",
+      "enabled_when": ["media.video.read", "media.video.write"],
+      "operations": [
+        {
+          "id": "convert",
+          "label": "Convert Video",
+          "description": "Change video format, codec, or quality",
+          "steps": ["Select video", "Choose format", "Set quality", "Choose output"]
+        },
+        {
+          "id": "extract_frame",
+          "label": "Extract Frame",
+          "description": "Save a single frame as image",
+          "steps": ["Select video", "Choose timestamp", "Choose format", "Choose output"]
+        },
+        {
+          "id": "resize",
+          "label": "Resize Video",
+          "description": "Change video dimensions",
+          "steps": ["Select video", "Enter resolution", "Choose method", "Choose output"]
+        },
+        {
+          "id": "transcode",
+          "label": "Transcode Video",
+          "description": "Change video codec",
+          "steps": ["Select video", "Choose codec", "Set quality", "Choose output"]
+        }
+      ]
+    },
+    "image": {
+      "label": "Image Processing 🖼️",
+      "enabled_when": ["media.image.read", "media.image.write"],
+      "operations": [
+        {
+          "id": "convert",
+          "label": "Convert Image",
+          "description": "Change image format",
+          "steps": ["Select image", "Choose format", "Choose output"]
+        },
+        {
+          "id": "extract_frame",
+          "label": "Extract from Video",
+          "description": "Save video frame as image",
+          "steps": ["Select video", "Choose timestamp", "Choose output"]
+        }
+      ]
+    },
+    "audio": {
+      "label": "Audio Processing 🎵",
+      "enabled_when": ["media.audio.read", "media.audio.write"],
+      "operations": [
+        {
+          "id": "extract_audio",
+          "label": "Extract Audio",
+          "description": "Extract audio from video",
+          "steps": ["Select video", "Choose format", "Set bitrate", "Choose output"]
+        },
+        {
+          "id": "convert_audio",
+          "label": "Convert Audio",
+          "description": "Change audio format",
+          "steps": ["Select audio", "Choose format", "Choose output"]
+        }
+      ]
+    }
+  },
+
+  "prompt_contract": {
+    "instruction": "Use FFmpeg only through the registered command paths. Never assume ffmpeg exists in PATH.",
+    "patterns": [
+      {
+        "name": "render_slideshow",
+        "regex": "(?:buat|render|bikin|rakit)\\s+(?:video|slideshow|klip)\\s+(?:dari|with|pakai)\\s+(?:gambar|foto|images)",
+        "capability": "media.video.render_slideshow",
+        "parameter_hints": {
+          "duration_per_image": "detect_duration",
+          "transition": "detect_transition",
+          "ratio": "detect_ratio"
+        }
+      }
+    ],
+    "examples": [
+      {
+        "input": "Buat video slideshow dari gambar-gambar ini, 2 detik per gambar",
+        "output": "Render slideshow with duration 2.0s per image",
+        "capability": "media.video.render_slideshow"
+      },
+      {
+        "input": "Extract frame at 00:01:30 from this video",
+        "output": "Extract frame at 00:01:30",
+        "capability": "media.video.extract_frame"
+      },
+      {
+        "input": "Extract audio from this video as MP3",
+        "output": "Extract audio as MP3",
+        "capability": "media.audio.extract"
+      }
+    ]
+  },
+
+  "signature": {
+    "algorithm": "ed25519",
+    "public_key": "base64_encoded_public_key",
+    "signed_manifest": "base64_encoded_signature_of_manifest"
+  }
+}

@@ -1,0 +1,46 @@
+//sarva-tech-extension-ffmpeg/example-request.txt
+
+# Example: Slideshow with Mixed Dimensions
+
+## USER PROMPT
+
+"Buat video slideshow dari gambar-gambar ini, 2 detik per gambar"
+
+## Attachments
+
+- photo1.jpg (1920x1080)
+- photo2.jpg (1080x1920)
+- photo3.jpg (640x480)
+
+## SARVA BEHAVIOR
+
+1. Prompt scanner detects: `media.video.render_slideshow`
+2. Capability resolver checks installed technology extensions.
+3. If `org.sarva.tech.ffmpeg` is installed, the extension handles the request.
+4. Extension parser extracts:
+   - `duration_per_image`: 2.0
+   - `transition`: none
+5. Extension checks image dimensions via ffprobe → mixed dimensions detected.
+6. Extension creates pending action with parameters.
+7. Sarva asks user: "Gambar memiliki ukuran berbeda. Lanjutkan dengan rasio 1920x1080?"
+8. User confirms: "ya"
+9. Extension resumes render with final parameters.
+10. Video saved to `/tmp/sarva_video_123456789.mp4`
+11. Last render snapshot saved for "ulangi" feature.
+
+## SUCCESS RESPONSE
+
+✅ Video berhasil dirender!
+📁 Output: /tmp/sarva_video_123456789.mp4
+📊 3 gambar, 2.0 detik/gambar, 1920x1080
+
+## REPEAT REQUEST
+
+User: "Ulangi video dengan durasi 3 detik per gambar"
+
+Extension reads last render snapshot → re-render with new duration.
+
+## Installation
+
+If extension is not installed, Sarva can propose installation from Market:
+- "FFmpeg extension is required for video processing. Install?"

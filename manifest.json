@@ -163,7 +163,7 @@
       "patterns": [
         {
           "type": "regex",
-          "value": "(?:buat|render|bikin|rakit|create|make)\\s+(?:video|slideshow|klip|clip)\\s+(?:dari|from|with)\\s+(?:gambar|foto|images|pictures)",
+          "value": "(?:buat|buatkan|render|bikin|bikinkan|rakit|create|make)\\s+(?:sebuah\\s+)?(?:video\\s+slideshow|slideshow\\s+video|video|slideshow|klip|clip)\\s+(?:dari|from|with|pakai|menggunakan)\\s+(?:gambar|foto|images|pictures)",
           "priority": 1
         },
         {
